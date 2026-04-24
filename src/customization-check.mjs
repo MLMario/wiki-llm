@@ -87,6 +87,16 @@ export function classifyFile(relPath, oldManifest, newManifest, diskSha) {
     );
   }
 
+  // Edge case (Phase 5a decision, option A — see Phase 5a report and design
+  // §3 step 4): if the on-disk bytes already match the new shipped sha, the
+  // file is at its target state and there is nothing to overwrite. Treat as
+  // 'unchanged' so the planner skips it and `--force` is not required.
+  // Rationale: design intent of Guard 1 is "don't overwrite user edits."
+  // When disk === new there is no user edit being preserved and no work to
+  // do. Without this short-circuit a user whose edits happened to match the
+  // upcoming version would be told to pass --force for a byte-level no-op.
+  if (diskSha === newEntry.sha256) return 'unchanged';
+
   if (diskSha === oldEntry.sha256) return 'overwrite-clean';
   return 'overwrite-customized';
 }

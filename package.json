@@ -16,7 +16,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "echo \"No tests yet\" && exit 0",
+    "test": "node --test test/customization-check.test.mjs test/manifest.test.mjs test/path-safety.test.mjs test/template.test.mjs",
     "fixtures:update": "echo \"fixtures:update not implemented yet\" && exit 0",
     "build-manifest": "node scripts/build-manifest.mjs",
     "check-manifest": "node scripts/build-manifest.mjs && git diff --exit-code templates/manifest.json",

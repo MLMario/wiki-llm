@@ -1,0 +1,126 @@
+{
+  "manifestVersion": 1,
+  "packageVersion": "0.0.0",
+  "files": {
+    ".claude/settings.json": {
+      "sha256": "3888fb182e14b25e93819114736df269fbcea8a33f537d8e0f09b6d750e2f53a",
+      "templated": false
+    },
+    ".claude/skills/kb-drop/SKILL.md": {
+      "sha256": "d6c429b3c6e4ffa2c787049a40a578dde91ed34bf7bfa3fe0638cadfd6b80e84",
+      "templated": false
+    },
+    ".claude/skills/kb-drop/reference/CONTEXT.md": {
+      "sha256": "041c8a27feeef8185622137ded517ad2883b10eb64f648f150ae747d0d092cf2",
+      "templated": false
+    },
+    ".claude/skills/kb-ingest/SKILL.md": {
+      "sha256": "8c0a10d9d4d650380aeccf84ef7e8c050c54b21827c93763914f446345d74736",
+      "templated": false
+    },
+    ".claude/skills/kb-ingest/reference/CONTEXT.md": {
+      "sha256": "f26b27058c2293f2f9f571d263fc035da485f40bafcac0fe7d7f9bc1f7b49e84",
+      "templated": false
+    },
+    ".claude/skills/kb-lint/SKILL.md": {
+      "sha256": "c9a7142e782d0e55134be1ecc748ec6aa819dfd754dc11bc26ed6b85b17ff497",
+      "templated": false
+    },
+    ".claude/skills/kb-lint/reference/CONTEXT.md": {
+      "sha256": "dc5d2b4695c0c5caf816c6b01ad29fe08f8e80d4a0f016c1d81a346965f39894",
+      "templated": false
+    },
+    ".claude/skills/kb-query/SKILL.md": {
+      "sha256": "b136d3a5156970b8dd75803eefae8df9ccaa11762370bd1e4c6174cdb49d50ba",
+      "templated": false
+    },
+    ".claude/skills/kb-query/reference/CONTEXT.md": {
+      "sha256": "9c5ef3c35dab69f876193b0b1df27bb1df6ba04cc39b887b2a7782b943cb0c06",
+      "templated": false
+    },
+    ".claude/skills/kb-resolve/SKILL.md": {
+      "sha256": "2c4cf5965487adc5816d4f64d315c42fdf1fdf96e9334afc26b1bb367ac1f851",
+      "templated": false
+    },
+    ".claude/skills/kb-resolve/reference/CONTEXT.md": {
+      "sha256": "5f0754fe5015ed8f801a5219722d70bec81aeeaeb47e4ddee69d26d283f78447",
+      "templated": false
+    },
+    ".gitignore": {
+      "sha256": "e923490b3e591cd11524409bd2dc38deba7ed60f9319709d96bc28c788aa43d5",
+      "templated": false
+    },
+    "CLAUDE.md": {
+      "sha256": "f9b1ff07f96af385404cfafc2693533a17d6190e0e6d63b6ed246277a2464487",
+      "templated": true
+    },
+    "README.md": {
+      "sha256": "686dd8a861028b385289b008155ffda20ca72f56bbb420f99bf259694b8ec16c",
+      "templated": true
+    },
+    "knowledge-base/CONTEXT.md": {
+      "sha256": "99c78ae74d3061d1baf5bd33ab1cff5c2c65b1bbc56ee173596a504561b5fccd",
+      "templated": false
+    },
+    "knowledge-base/curriculum.md": {
+      "sha256": "630a81b069da24aaefbaf95c4b377fe059cde3749289f4b1eec8b372caec9a7d",
+      "templated": true
+    },
+    "knowledge-base/index.md": {
+      "sha256": "525ef48072f1412cd6c56004c9ad2babc9818e37b734fd7710c113d521b98d36",
+      "templated": true
+    },
+    "knowledge-base/log.md": {
+      "sha256": "2a434d80a286978c61e2cf6676534103884ebf75a99a6958dcc38f82ed237910",
+      "templated": false
+    },
+    "knowledge-base/raw/articles/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/raw/images/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/raw/misc/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/raw/notes/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/raw/papers/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/source_index.md": {
+      "sha256": "5baf277913436cc5f8188753c66a0fb78eec4c1d060abe1e455415a533948a9d",
+      "templated": false
+    },
+    "knowledge-base/wiki/comparisons/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/wiki/concepts/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/wiki/entities/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "knowledge-base/wiki/sources/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
+    "requirements.txt": {
+      "sha256": "9b313f0acdd39ce9e1406257318170bff7881d6288f7c5c43867e6d091a221bb",
+      "templated": false
+    },
+    "utils/pdf_to_markdown.py": {
+      "sha256": "da897c84c5c09bea886d52cb6fa1004bb19b1026837c5bf3498f917fda852426",
+      "templated": false
+    }
+  }
+}

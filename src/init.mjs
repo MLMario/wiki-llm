@@ -286,7 +286,7 @@ export async function init(options) {
       manifestVersion: 1,
       packageVersion,
       scaffoldedAt: now,
-      lastUpdatedAt: now,
+      lastUpdatedAt: null,
       files: sortKeys(runtimeFiles),
     };
     writeManifest(targetDir, runtimeManifest);

@@ -1,0 +1,31 @@
+{
+  "name": "create-wiki-llm",
+  "version": "0.0.0",
+  "description": "Scaffold a Karpathy-style LLM knowledge-base repo for Claude Code, driven by kb-* skills.",
+  "type": "module",
+  "bin": {
+    "create-wiki-llm": "./src/cli.mjs"
+  },
+  "files": [
+    "src/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0",
+    "fixtures:update": "echo \"fixtures:update not implemented yet\" && exit 0",
+    "build-manifest": "echo \"build-manifest not implemented yet\" && exit 0",
+    "prepublishOnly": "echo \"prepublishOnly not implemented yet\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MLMario/wiki_llm.git"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -310,30 +310,46 @@ test('update: no-op (same content) — all unchanged, lastUpdatedAt set, no back
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 2 — clean v0.0.0 → v0.1.0 update.
+// Scenario 2 — clean update across a version bump (bytes change in TARGET_SKILL).
+//
+// The "from" version is whatever templates/manifest.json currently advertises
+// (init() reads it at scaffold time), and the "to" version is one bumped patch
+// above. Hardcoding either side would tie the test to a specific package
+// version and break on every bump.
 // ---------------------------------------------------------------------------
 
-test('update: clean v0.0.0 → v0.1.0 — applies, backup contains old bytes', async () => {
+test('update: clean version bump — applies, backup contains old bytes', async () => {
   const sc = await scaffold('s2');
   try {
+    // Read the live templates/manifest.json so the test tracks whatever
+    // version the package is currently at (and bump it by one patch for the
+    // synthetic tarball).
+    const liveManifest = JSON.parse(
+      readFileSync(path.join(TEMPLATES_DIR, 'manifest.json'), 'utf8'),
+    );
+    const fromVersion = liveManifest.packageVersion;
+    const [maj, min, patch] = fromVersion.split('.').map(Number);
+    const toVersion = `${maj}.${min}.${patch + 1}`;
+
     const before = fingerprintTree(sc.root);
     const fileMap = buildFixtureFileMap({
-      packageVersion: '0.1.0',
+      packageVersion: toVersion,
       overrides: {
-        [TARGET_SKILL]: templateBytes(TARGET_SKILL) + '\n<!-- v0.1.0 update marker -->\n',
+        [TARGET_SKILL]:
+          templateBytes(TARGET_SKILL) + `\n<!-- v${toVersion} update marker -->\n`,
       },
     });
-    const tarballBuf = packTarball(fileMap, '0.1.0');
+    const tarballBuf = packTarball(fileMap, toVersion);
     const fetch = makeFetchStub({
       packageName: 'create-wiki-llm',
-      version: '0.1.0',
+      version: toVersion,
       tarballBuf,
     });
 
     const result = await update({ repoRoot: sc.root, fetch, log: () => {} });
 
-    assert.equal(result.version, '0.1.0');
-    assert.equal(result.oldVersion, '0.0.0');
+    assert.equal(result.version, toVersion);
+    assert.equal(result.oldVersion, fromVersion);
     assert.equal(result.appliedCount, 1);
     assert.equal(result.backup.count, 1);
     assert.ok(result.backup.path !== null);
@@ -352,7 +368,10 @@ test('update: clean v0.0.0 → v0.1.0 — applies, backup contains old bytes', a
       path.join(sc.root, ...TARGET_SKILL.split('/')),
       'utf8',
     );
-    assert.match(updatedBytes, /v0\.1\.0 update marker/);
+    assert.ok(
+      updatedBytes.includes(`v${toVersion} update marker`),
+      `expected update marker for v${toVersion} in skill bytes`,
+    );
 
     // Seed/User zone integrity check.
     for (const rel of [

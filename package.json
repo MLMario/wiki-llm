@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "node --test test/customization-check.test.mjs test/manifest.test.mjs test/path-safety.test.mjs test/template.test.mjs",
-    "fixtures:update": "echo \"fixtures:update not implemented yet\" && exit 0",
+    "fixtures:update": "node scripts/build-fixtures.mjs",
     "build-manifest": "node scripts/build-manifest.mjs",
     "check-manifest": "node scripts/build-manifest.mjs && git diff --exit-code templates/manifest.json",
     "prepublishOnly": "echo \"prepublishOnly not implemented yet\" && exit 0"

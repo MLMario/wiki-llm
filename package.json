@@ -1,6 +1,6 @@
 {
   "name": "create-wiki-llm",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Scaffold a Karpathy-style LLM knowledge-base repo for Claude Code, driven by kb-* skills.",
   "type": "module",
   "bin": {
@@ -20,7 +20,7 @@
     "fixtures:update": "node scripts/build-fixtures.mjs",
     "build-manifest": "node scripts/build-manifest.mjs",
     "check-manifest": "node scripts/build-manifest.mjs && git diff --exit-code templates/manifest.json",
-    "prepublishOnly": "echo \"prepublishOnly not implemented yet\" && exit 0"
+    "prepublishOnly": "npm run check-manifest && npm test && node scripts/version-check.mjs"
   },
   "repository": {
     "type": "git",

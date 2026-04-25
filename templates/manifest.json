@@ -46,10 +46,6 @@
       "sha256": "5f0754fe5015ed8f801a5219722d70bec81aeeaeb47e4ddee69d26d283f78447",
       "templated": false
     },
-    ".gitignore": {
-      "sha256": "e923490b3e591cd11524409bd2dc38deba7ed60f9319709d96bc28c788aa43d5",
-      "templated": false
-    },
     "CLAUDE.md": {
       "sha256": "f9b1ff07f96af385404cfafc2693533a17d6190e0e6d63b6ed246277a2464487",
       "templated": true

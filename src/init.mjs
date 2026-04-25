@@ -17,6 +17,16 @@ import { fileURLToPath } from 'node:url';
 import { sha256, writeManifest } from './manifest.mjs';
 import { substitute } from './template.mjs';
 
+// .gitignore content is written inline (not shipped under templates/) because
+// `npm pack` strips any file literally named `.gitignore` from the tarball.
+// See https://github.com/npm/npm/issues/3763 — this behaviour is intentional in
+// the npm CLI and not configurable. Inlining is the simplest workaround that
+// keeps scaffolded repos consistent between local-checkout installs and the
+// published tarball. The bytes below are LF-only, with a single trailing LF;
+// they MUST round-trip byte-for-byte through writeFileSync(..., 'utf8').
+const GITIGNORE_CONTENT = '.wiki-llm/backups/\nnode_modules/\n.DS_Store\n';
+const GITIGNORE_REL = '.gitignore';
+
 const WINDOWS_RESERVED_NAMES = new Set([
   'CON',
   'PRN',
@@ -279,6 +289,21 @@ export async function init(options) {
         templated: templated.has(posixRel),
       };
       writtenPaths.push(targetAbs);
+    }
+
+    // Write the inlined .gitignore (see GITIGNORE_CONTENT comment for rationale).
+    // Must run inside the try block so a failure here triggers the rollback path,
+    // and must run before sortKeys() so the manifest entry sorts correctly.
+    {
+      const gitignoreAbs = path.join(targetDir, GITIGNORE_REL);
+      mkdirSync(path.dirname(gitignoreAbs), { recursive: true });
+      const gitignoreBytes = Buffer.from(GITIGNORE_CONTENT, 'utf8');
+      writeFileSync(gitignoreAbs, gitignoreBytes);
+      runtimeFiles[GITIGNORE_REL] = {
+        sha256: sha256(gitignoreBytes),
+        templated: false,
+      };
+      writtenPaths.push(gitignoreAbs);
     }
 
     const now = new Date().toISOString();

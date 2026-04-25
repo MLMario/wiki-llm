@@ -6,13 +6,21 @@
 
 `create-wiki-llm` is an npm scaffolder for a personal markdown knowledge base that Claude Code maintains for you. It is a productized take on Andrej Karpathy's April 2026 LLM wiki idea, the one that drew about 41,000 bookmarks in a week: folders of raw sources, AI-compiled markdown pages, viewed in Obsidian or any markdown editor. Karpathy described his own version as *"a hacky collection of scripts"* with *"room here for an incredible new product."* This package is one attempt at that productization.
 
-If you already know the Karpathy LLM wiki pattern, skip ahead to **Installation**. If not, here is the short version. Ingest is where the thinking happens, not query. The LLM reads each new source once and compiles it into structured markdown pages, instead of leaving everything in a searchable pile that you have to re-derive answers from on every question. The wiki compounds across years. Queries read pages that were already synthesized at write time, which is cheap.
+If you already know the Karpathy LLM wiki pattern, skip ahead to **Installation**. If not, the short version:
+
+1) The LLM reads each new source once and identifies key concepts and enteties. 
+2) If the concepts/enteties are already on wiki -> it adds new information, surfaces counterarguments and flags factual contradictions
+3) if the concepts/enteties are new -> it creates itw own wiki pages 
+4) In both cases the LLM also searchs for related concepts and adds them to the page. 
+5) You can also use a skill to query the wiki, it will answer by looking for top relevant content.
+
+Basically, the LLM helps you identify and update your knowledge while identifying connections with your current knowledge. 
 
 ### What this version adds on top of the basic pattern
 
 - **Contradictions are first-class artifacts**, not edge cases. When a new source disagrees with the wiki, ingest flags it in place and `/kb-resolve` adjudicates one contradiction at a time. The losing source summary gets an amendment preamble and `source_index.md` marks it `[demoted]`. Disagreements survive the decision instead of being averaged away.
 - **Verbatim raw capture**. HTML drops are fetched through Jina Reader, local PDFs are converted via `pymupdf4llm`, and PDF URLs are hard-rejected at drop time. The LLM never paraphrases your source on the way into the inbox.
-- **Permission-gated source reading**. `/kb-query` reads compiled wiki pages by default and only opens source summaries when a permission gate fires, so provenance lives in its own layer instead of leaking into every answer.
+- **Query skill prioritizes reading from wiki pages**. `/kb-query` reads compiled wiki pages by default and only opens source summaries when a permission gate fires, so provenance lives in its own layer instead of leaking into every answer.
 
 ### The philosophy
 
@@ -34,7 +42,7 @@ Open the directory in Claude Code and capture your first source:
 ```
 /kb-drop https://example.com/some-article
 /kb-ingest
-/kb-query what does this article say about X?
+/kb-query I'm thinking through my organizational knowledge theory, what concept could help understand better how organization consume and execute knowledge? and how could database ontologies be applied here? what would better ontologies facilitate?
 ```
 
 ### Requirements

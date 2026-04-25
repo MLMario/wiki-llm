@@ -340,14 +340,29 @@ test('validateTargetPath: ".." suffix that traverses out is rejected', () => {
   );
 });
 
-test('validateTargetPath: "utils/.." (collapses to ".") does NOT throw', () => {
-  // Documents (and locks in) current behavior: `utils/..` post-normalize is
-  // `.`, which resolves to repoRoot itself. validateTargetPath treats this
-  // as inside-the-root and returns repoRoot. The allowlist gate stops this
-  // path being written to (it is not a Package-zone file). Reported as a
-  // potential strictening target for Phase 5b's safety.test.mjs to consider.
-  const got = validateTargetPath('utils/..', REPO_ROOT);
-  assert.equal(got, path.resolve(REPO_ROOT));
+test('validateTargetPath: "utils/.." (collapses to ".") IS rejected (Phase 5b strengthening)', () => {
+  // Phase 5b decision (tighten): `utils/..` post-normalize is `.`, which
+  // would otherwise resolve to repoRoot itself. The post-normalize check
+  // rejects any path that collapses to `''` or `'.'`. Defense-in-depth even
+  // though Guard 2 (Package-zone allowlist) would still skip such an entry.
+  assert.throws(
+    () => validateTargetPath('utils/..', REPO_ROOT),
+    /collapses to repository root|traversal/,
+  );
+});
+
+test('validateTargetPath: bare "." rejected (collapse-to-root)', () => {
+  assert.throws(
+    () => validateTargetPath('.', REPO_ROOT),
+    /collapses to repository root/,
+  );
+});
+
+test('validateTargetPath: "./" rejected (collapse-to-root)', () => {
+  assert.throws(
+    () => validateTargetPath('./', REPO_ROOT),
+    /collapses to repository root/,
+  );
 });
 
 test('validateTargetPath: bare ".." rejected', () => {

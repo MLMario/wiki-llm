@@ -146,6 +146,20 @@ export function validateTargetPath(relPath, repoRoot) {
     );
   }
 
+  // Defense-in-depth (Phase 5b strengthening). Inputs like `utils/..`, `.`,
+  // or `./` collapse to repo root after normalization (`path.posix.normalize`
+  // yields `'.'` or `'./'` respectively). Without this check,
+  // validateTargetPath would happily return the repoRoot as a writable path.
+  // The Package-zone allowlist (Guard 2) is the real gate — none of these
+  // collapse-to-root paths sit inside it — but surface-level rejection is
+  // cheaper than relying on a downstream guard. See test/path-safety.test.mjs
+  // for the locked-in negatives.
+  if (normalized === '' || normalized === '.' || normalized === './') {
+    throw new Error(
+      `Unsafe path ${JSON.stringify(relPath)}: collapses to repository root after normalization.`,
+    );
+  }
+
   // Reject leading-slash after normalize (shouldn't happen after earlier
   // check, but belt-and-braces for cases like `//a/b`).
   if (normalized.startsWith('/')) {

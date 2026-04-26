@@ -1,9 +1,13 @@
 # kb-ingest — Scoped Context
 
-> Scoped schema and conventions for the `kb-ingest` skill. Travels with the skill; read at runtime via `reference/CONTEXT.md`.
-> Shared-rule drift: if you edit a rule that also appears in sibling KB skills (`kb-drop`, `kb-resolve`, `kb-lint`, `kb-query`), sync it across each skill's `reference/CONTEXT.md`.
-
-The raw/ frontmatter schema, wiki/ frontmatter schema, and all four page templates (Concept, Entity, Source Summary, Comparison) are already inlined in this skill's `SKILL.md`. This file covers the cross-page conventions ingest must respect when writing into the wiki.
+> Scoped reference for the **orchestrator** (`/kb-ingest` SKILL.md) and **kb-wiki-update**
+> (Agent 3, the only writer in the multi-agent pipeline). Agents 1 (kb-extract-explore)
+> and 2 (kb-analyzer) inline the narrow conventions they need into their own agent
+> definition bodies under `.claude/agents/`.
+>
+> Shared-rule drift: if you edit a rule that also appears in sibling KB skills
+> (`kb-drop`, `kb-resolve`, `kb-lint`, `kb-query`), sync it across each skill's
+> `reference/CONTEXT.md`.
 
 ## Directory Structure
 
@@ -54,7 +58,7 @@ The master index (`knowledge-base/index.md`) is organized by tag/topic (H3 secti
   `> Total pages: N | Concepts: N | Entities: N | Comparisons: N`
   — **no `Sources: N` field**; that belongs to `source_index.md`'s stats line.
 
-### Source Index Conventions
+## Source Index Conventions
 
 `knowledge-base/source_index.md` is the flat, chronological index of source-summary pages, separate from `index.md` by design (source summaries are a distinct retrieval layer behind kb-query's permission gate).
 
@@ -71,40 +75,22 @@ The master index (`knowledge-base/index.md`) is organized by tag/topic (H3 secti
 - `log.md` is prepend-only (newest entries at the top of the file).
 - Ingest entry heading format: `## [YYYY-MM-DD] ingest | "{source title}"`
 
-## Ingest-Relevant Conventions
+## Image Handling
 
-- **Batch ordering:** process oldest first, by `dropped_date`. Preserves chronological wiki growth.
-- **Confidence levels:**
-  - `high` = multiple corroborating sources.
-  - `medium` = single authoritative source.
-  - `low` = inferred or speculative.
-  - On update, a `medium` page with a new corroborating source may be upgraded to `high`.
-- **Page length cap:** single wiki page max 300 lines. If a page would exceed this, split into sub-pages.
-- **Image handling (v1):** `raw/` may contain image files. Note their paths in the source-summary page but do not ingest images into wiki pages.
-- **Filename and slug encoding:** kebab-case, ASCII only, across all wiki page filenames.
+- `raw/` may contain image files. Note their paths in the source-summary page but do not ingest images into wiki pages.
 
-### Contradiction Routing
+## Staging Directory Conventions
 
-When updating an existing concept/entity page, classify each extracted claim against the page's current body and route accordingly. Three-way distinction (plus corroboration):
+The orchestrator uses `knowledge-base/.kb-ingest-staging/<source-stem>/` as a
+per-source scratchpad shared by the three subagents:
 
-| Classification | Definition | Route |
-|---|---|---|
-| Direct factual opposition | "X is true" vs. "X is false" about the same thing; resolvable by deciding which is right. | Append H3 entry under `## Contradictions`; set `has_contradiction: true`; **hold the new source's raw path out of `sources:` AND the derived summary path out of `source_summaries:` on this page** (single exception to the normal mirrored append rule; both lists held out in lockstep). |
-| Counterargument | Different framing, critique, competing perspective; not strictly factually opposed. | Append to `## Counterarguments / Gaps`; normal mirrored `sources:` + `source_summaries:` append applies. |
-| Gap | Acknowledged unknown / missing data. | Append to `## Counterarguments / Gaps`; normal mirrored `sources:` + `source_summaries:` append applies. |
-| Corroboration / additive | Reinforces or extends existing content. | Normal update path: merge into body, append to `sources:`, mirror to `source_summaries:`. |
+- Hidden (leading `.`) and gitignored.
+- Created by orchestrator before the Agent 1 spawn.
+- Per-source files: `01-extract.md` (Agent 1 output), `02-analysis.md` (Agent 2 output).
+- Persists on every outcome (success and failure) for v1 quality inspection.
+- Cleaned only via the pre-flight gate at the next run, with user confirmation.
 
-**Conservative default:** when the opposition-vs-counterargument call is unclear, route to counterargument/gap. Don't over-flag.
-
-**Multi-claim sources:** when one source contributes both contradicting and non-contradicting claims (possibly spanning different pages), route each claim independently. The `sources:` + `source_summaries:` suspension is per-page and applies only to pages where the source's claim is the contradicting one.
-
-**Ingest flags; it never resolves.** Resolution is `kb-resolve` territory. Ingest's reporting duty: surface `Contradictions flagged:` in both the final user-facing summary and (conditionally) the `log.md` entry.
-
-**`sources:` is co-owned.** Ingest appends new raw paths on update (with the per-page suspension above for contradicting claims). `kb-resolve` may later add winner paths or remove loser paths on adjudication. The list reflects currently endorsed provenance, not full history — kb-query and kb-lint both assume this semantics.
-
-Full templates (`## Contradictions` H3 entry, amendment preamble) and the frontmatter keys (`has_contradiction`, `has_demoted_or_debunk_claim`) live in `kb-ingest/SKILL.md` — this subsection is the routing rule, not the shapes.
-
-### `source_summaries:` Writer Rule
+## `source_summaries:` Writer Rule
 
 `source_summaries:` is a **strict, order-preserving mirror** of `sources:` on every concept/entity/comparison page. Kb-ingest writes it:
 
@@ -115,7 +101,7 @@ Full templates (`## Contradictions` H3 entry, amendment preamble) and the frontm
 
 Source-summary pages themselves do not carry `source_summaries:` — their own `sources:` points to a single raw/ file and no mirror is needed.
 
-### `source_index.md` Maintenance
+## `source_index.md` Maintenance
 
 Kb-ingest owns the **append** path on `source_index.md`:
 

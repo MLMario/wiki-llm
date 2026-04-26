@@ -33,9 +33,9 @@ This repo was scaffolded by `create-wiki-llm`. The five `kb-*` skills, the Pytho
       kb-drop/                 # Drop a URL/file/note into raw/
         SKILL.md
         reference/CONTEXT.md   # Scoped schema/conventions read by kb-drop
-      kb-ingest/                # Compile raw/ -> wiki/
+      kb-ingest/                # Compile raw/ -> wiki/ (orchestrator, spawns agents below)
         SKILL.md
-        reference/CONTEXT.md   # Scoped schema/conventions read by kb-ingest
+        reference/CONTEXT.md   # Scoped schema/conventions read by kb-ingest orchestrator + Agent 3
       kb-resolve/               # Adjudicate contradictions flagged by kb-ingest
         SKILL.md
         reference/CONTEXT.md   # Scoped schema/conventions read by kb-resolve
@@ -45,6 +45,10 @@ This repo was scaffolded by `create-wiki-llm`. The five `kb-*` skills, the Pytho
       kb-query/                 # Search wiki, synthesize answers with citations
         SKILL.md
         reference/CONTEXT.md   # Scoped schema/conventions read by kb-query
+    agents/                     # Custom subagents spawned by /kb-ingest (orchestrator-only)
+      kb-extract-explore.md     # Agent 1 -- read-only extraction with semantic dedup
+      kb-analyzer.md            # Agent 2 -- claim routing + prose authoring + summary draft
+      kb-wiki-update.md         # Agent 3 -- mechanical schema-aware writer (only writer)
     settings.json
   utils/
     pdf_to_markdown.py         # Local PDF -> markdown helper used by kb-drop
@@ -77,6 +81,8 @@ Each KB skill reads its own scoped reference file (`.claude/skills/kb-{drop,inge
 4. **Query** — `/kb-query What have I read about <topic>?`. Reads `index.md`, opens the relevant concept/entity/comparison pages, and answers with wikilink citations. If the query benefits from sources (provenance questions, source-level validation, "what did I read last week"), kb-query asks permission before reading `wiki/sources/` summaries or `source_index.md`.
 5. **Health check (periodic)** — `/kb-lint`. Surfaces orphan pages, broken links, stale content, drift in contradiction-state flags, and `sources:` / `source_summaries:` parity violations.
 
+`/kb-ingest` is **orchestrator-shaped**. The skill itself is a thin orchestrator that, for each pending raw/ source, spawns three custom subagents in sequence: `kb-extract-explore` (read-only extraction with semantic dedup), `kb-analyzer` (claim routing + prose authoring + source-summary draft), and `kb-wiki-update` (the only writer — mechanical schema mechanic). The agent definitions live under `.claude/agents/` and are spawned only by the orchestrator (not invokable directly). Per-source artifacts persist under `knowledge-base/.kb-ingest-staging/<stem>/` for inspection; that directory is gitignored and wiped via a pre-flight prompt on the next run.
+
 ## Design Constraints
 
 - **No Python in the KB skill loop.** Skill logic (`kb-drop`, `kb-ingest`, `kb-resolve`, `kb-lint`, `kb-query`) stays in `.claude/skills/kb-*/SKILL.md` using built-in tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`). Python is permitted only for format-conversion helpers in `utils/` — currently just PDF -> markdown via `pymupdf4llm`. Ingest, resolve, lint, and query remain pure-markdown + built-in tools.
@@ -93,7 +99,7 @@ Each KB skill reads its own scoped reference file (`.claude/skills/kb-{drop,inge
 
 ## Updating the package-owned files
 
-The five `kb-*` skills, `utils/pdf_to_markdown.py`, `requirements.txt`, and `knowledge-base/CONTEXT.md` are owned by the `create-wiki-llm` package. To pull the latest versions:
+The five `kb-*` skills, the kb-ingest agents under `.claude/agents/`, `utils/pdf_to_markdown.py`, `requirements.txt`, and `knowledge-base/CONTEXT.md` are owned by the `create-wiki-llm` package. To pull the latest versions:
 
 ```bash
 npx create-wiki-llm@latest --update

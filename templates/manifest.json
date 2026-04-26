@@ -1,7 +1,19 @@
 {
   "manifestVersion": 1,
-  "packageVersion": "0.1.0",
+  "packageVersion": "0.1.1",
   "files": {
+    ".claude/agents/kb-analyzer.md": {
+      "sha256": "f53609dc383c3934a26f2e181fc4440cfd7d75b6cfc8fb7b4f92f6a83857cb82",
+      "templated": false
+    },
+    ".claude/agents/kb-extract-explore.md": {
+      "sha256": "fe94a5c7164ee9f8d57aa32798ed96bd429e1032bb3b594d3623d6cbb2ddc85c",
+      "templated": false
+    },
+    ".claude/agents/kb-wiki-update.md": {
+      "sha256": "c8fbaab61c34c9234ea944894c586b163812492ef6d7d8daf10b00422cf0007a",
+      "templated": false
+    },
     ".claude/settings.json": {
       "sha256": "3888fb182e14b25e93819114736df269fbcea8a33f537d8e0f09b6d750e2f53a",
       "templated": false
@@ -15,11 +27,11 @@
       "templated": false
     },
     ".claude/skills/kb-ingest/SKILL.md": {
-      "sha256": "8c0a10d9d4d650380aeccf84ef7e8c050c54b21827c93763914f446345d74736",
+      "sha256": "9c0b6e29be5aad6786fec832f560abb5577bb8f260c81963715e61cf0e6429f3",
       "templated": false
     },
     ".claude/skills/kb-ingest/reference/CONTEXT.md": {
-      "sha256": "f26b27058c2293f2f9f571d263fc035da485f40bafcac0fe7d7f9bc1f7b49e84",
+      "sha256": "afbfd445fb3b1e0cbcc165204cfc59ed6cde200886d85f8ad0653ed15e51c2c4",
       "templated": false
     },
     ".claude/skills/kb-lint/SKILL.md": {
@@ -47,7 +59,7 @@
       "templated": false
     },
     "CLAUDE.md": {
-      "sha256": "f9b1ff07f96af385404cfafc2693533a17d6190e0e6d63b6ed246277a2464487",
+      "sha256": "cccd29218daa7565740cf0bf28730707506ddcc0bf9bc730cd830d8d4901e0b9",
       "templated": true
     },
     "README.md": {
@@ -55,7 +67,7 @@
       "templated": true
     },
     "knowledge-base/CONTEXT.md": {
-      "sha256": "99c78ae74d3061d1baf5bd33ab1cff5c2c65b1bbc56ee173596a504561b5fccd",
+      "sha256": "9bf58d4cbc0ab2dcd40bbcb440d0a8f809133c5ce981a3bfdd2bdd146224a9e3",
       "templated": false
     },
     "knowledge-base/curriculum.md": {

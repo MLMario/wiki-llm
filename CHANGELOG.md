@@ -6,7 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-04-24
+## [0.1.1] - 2026-04-25
+
+`/kb-ingest` is now an orchestrator that spawns three custom subagents per pending raw/ source instead of running a single-pass routine.
+
+### Added
+
+- `.claude/agents/` Package zone, with three subagents shipped under it:
+  - `kb-extract-explore` (Agent 1) — read-only extraction with semantic dedup against the existing wiki.
+  - `kb-analyzer` (Agent 2) — claim routing, prose authoring, source-summary drafting; no writes.
+  - `kb-wiki-update` (Agent 3) — the only writer; mechanical schema-aware applier of Agent 2's output.
+- Per-source intermediate artifacts (`01-extract.md`, `02-analysis.md`) are persisted under `knowledge-base/.kb-ingest-staging/<stem>/` for inspection — gitignored, kept on every outcome (success and failure), wiped via a pre-flight prompt on the next run.
+- Path-safety allowlist now includes `.claude/agents/` so `--update` recognises the new agent files as Package-zone writable targets.
+
+### Changed
+
+- `.claude/skills/kb-ingest/SKILL.md` rewritten as a thin orchestrator: it loads `reference/CONTEXT.md`, locates pending raw/ items, and spawns the three agents in sequence per source. Output schema (wiki/, index.md, source_index.md, log.md, raw status flip) is unchanged.
+- `.claude/skills/kb-ingest/reference/CONTEXT.md` pruned to the orchestrator + Agent 3 scope; Agents 1 and 2 read their own reasoning out of their agent definition files.
+- Scaffolded `CLAUDE.md` and `knowledge-base/CONTEXT.md` document the multi-agent architecture and the new `.claude/agents/` directory.
+
+### Migration notes
+
+- Existing scaffolded repos pick up the change via `npx create-wiki-llm@latest --update`. The updater will write the three new agent files into `.claude/agents/` and overwrite `kb-ingest/SKILL.md` + `kb-ingest/reference/CONTEXT.md` with backups under `.wiki-llm/backups/<timestamp>/`.
+- If you customised the prior single-pass `kb-ingest/SKILL.md`, the updater will refuse without `--force`. Diff your customisation against the new orchestrator before reapplying — the call shape changed (skill -> spawn agents) and a hand-edited single-pass body cannot be merged in mechanically.
+- `knowledge-base/.kb-ingest-staging/` is gitignored on fresh scaffolds. Existing repos should add that line to their `.gitignore` manually if they want to keep the staging dir out of source control.
+
+
 
 Initial public release.
 
@@ -36,5 +61,6 @@ Initial public release.
 - The updater requires network access to `https://registry.npmjs.org` to fetch the latest tarball.
 - No `--merge` option for skill customizations in v0.1; the only choices are "refuse" (default) or "overwrite with backup" (`--force`).
 
-[Unreleased]: https://github.com/MLMario/wiki-llm/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/MLMario/wiki-llm/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/MLMario/wiki-llm/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/MLMario/wiki-llm/releases/tag/v0.1.0

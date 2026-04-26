@@ -1,6 +1,6 @@
 {
   "name": "create-wiki-llm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold a Karpathy-style LLM knowledge-base repo for Claude Code, driven by kb-* skills.",
   "type": "module",
   "bin": {

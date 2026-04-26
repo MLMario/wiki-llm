@@ -26,6 +26,7 @@ import path from 'node:path';
  */
 const PACKAGE_ZONE_PREFIXES = Object.freeze([
   '.claude/skills/',
+  '.claude/agents/',
   'utils/',
 ]);
 

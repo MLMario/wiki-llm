@@ -18,6 +18,10 @@ Personal knowledge vault following the Karpathy LLM Wiki pattern. All content is
 
 Because each scoped reference lives inside its skill folder, the skills are self-contained and portable — they do not depend on this file or on the `knowledge-base/` tree being co-installed. Full frontmatter schemas and the four page templates are duplicated inside each `.claude/skills/kb-*/SKILL.md`.
 
+### kb-ingest multi-agent architecture
+
+`/kb-ingest` is an orchestrator that spawns three custom subagents per pending source: `kb-extract-explore` (Agent 1 — read-only extraction with semantic dedup), `kb-analyzer` (Agent 2 — claim routing + prose authoring + source-summary draft), and `kb-wiki-update` (Agent 3 — the only writer; mechanical schema mechanic). Agent definitions live under `.claude/agents/` and are spawned only by the orchestrator. Per-source intermediate artifacts (`01-extract.md`, `02-analysis.md`) are persisted under `knowledge-base/.kb-ingest-staging/<stem>/` for inspection — gitignored, kept on every outcome (success and failure), wiped via a pre-flight prompt on the next run. The output schema (wiki/, index.md, source_index.md, log.md, raw status flip) is unchanged from the prior architecture.
+
 ### Shared-rule drift warning
 
 Rules that appear in more than one scoped reference:

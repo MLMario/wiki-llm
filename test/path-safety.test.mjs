@@ -3,7 +3,8 @@
 //
 // The module implements Guards 2 and 3 from design §4 (allowlist + path
 // traversal validation). Coverage focuses on:
-//   - isPackageZonePath returns true ONLY for the four hardcoded prefixes.
+//   - isPackageZonePath returns true ONLY for the hardcoded Package-zone
+//     prefixes (.claude/skills/, .claude/agents/, utils/) and exact files.
 //   - isPackageZonePath never throws (returns false on weird inputs).
 //   - validateTargetPath throws on every documented unsafe shape.
 //   - validateTargetPath returns a resolved absolute path on success.
@@ -40,6 +41,23 @@ test('isPackageZonePath: every kb-* skill is package zone', () => {
       isPackageZonePath(`.claude/skills/${skill}/SKILL.md`),
       true,
       `expected .claude/skills/${skill}/SKILL.md to be package zone`,
+    );
+  }
+});
+
+test('isPackageZonePath: .claude/agents/ deep file is package zone', () => {
+  assert.equal(
+    isPackageZonePath('.claude/agents/kb-extract-explore.md'),
+    true,
+  );
+});
+
+test('isPackageZonePath: every kb-ingest agent file is package zone', () => {
+  for (const agent of ['kb-extract-explore', 'kb-analyzer', 'kb-wiki-update']) {
+    assert.equal(
+      isPackageZonePath(`.claude/agents/${agent}.md`),
+      true,
+      `expected .claude/agents/${agent}.md to be package zone`,
     );
   }
 });
@@ -161,6 +179,12 @@ test('isPackageZonePath: ".claude/skills/../../evil" rejected via normalize', ()
   // path.posix.normalize collapses the .. segments; the result no longer
   // matches the .claude/skills/ prefix or any other Package-zone entry.
   assert.equal(isPackageZonePath('.claude/skills/../../evil'), false);
+});
+
+test('isPackageZonePath: bare ".claude/agents/" prefix (no file) returns false', () => {
+  // Same length-guard rationale as the .claude/skills/ case — a path equal
+  // to the prefix has no file segment beyond it, so it is not a writable target.
+  assert.equal(isPackageZonePath('.claude/agents/'), false);
 });
 
 test('isPackageZonePath: bare ".claude/skills/" prefix (no file) returns false', () => {

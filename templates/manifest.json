@@ -1,7 +1,11 @@
 {
   "manifestVersion": 1,
-  "packageVersion": "0.1.1",
+  "packageVersion": "0.2.0",
   "files": {
+    ".claude/agents/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "templated": false
+    },
     ".claude/agents/kb-analyzer.md": {
       "sha256": "f53609dc383c3934a26f2e181fc4440cfd7d75b6cfc8fb7b4f92f6a83857cb82",
       "templated": false
@@ -10,12 +14,32 @@
       "sha256": "fe94a5c7164ee9f8d57aa32798ed96bd429e1032bb3b594d3623d6cbb2ddc85c",
       "templated": false
     },
+    ".claude/agents/kb-search.md": {
+      "sha256": "ec3969d4a5ec25bc7e4874bd08906afabc46b97e5cfd8874b7809a8fd3cc21cc",
+      "templated": false
+    },
     ".claude/agents/kb-wiki-update.md": {
       "sha256": "c8fbaab61c34c9234ea944894c586b163812492ef6d7d8daf10b00422cf0007a",
       "templated": false
     },
     ".claude/settings.json": {
       "sha256": "3888fb182e14b25e93819114736df269fbcea8a33f537d8e0f09b6d750e2f53a",
+      "templated": false
+    },
+    ".claude/skills/kb-draft-directed/SKILL.md": {
+      "sha256": "ce1957310f81a6d6de300b51a4ed1604b8283e5dab2ae0b18a8f96ae2056d3d4",
+      "templated": false
+    },
+    ".claude/skills/kb-draft-directed/reference/CONTEXT.md": {
+      "sha256": "72a044046e265873f7fe6c589f5c8c60fa89fa109f506d62f7bee6bec9e5c016",
+      "templated": false
+    },
+    ".claude/skills/kb-draft/SKILL.md": {
+      "sha256": "daaa0af55a12c5dec1b667c3d03f479ca24c38d614187d7d296c17fee6dea285",
+      "templated": false
+    },
+    ".claude/skills/kb-draft/voice-profile.md": {
+      "sha256": "fe226412da9f7469dd13b09634fc171c699a25250ce13b17bf223c6f910919eb",
       "templated": false
     },
     ".claude/skills/kb-drop/SKILL.md": {
@@ -27,7 +51,7 @@
       "templated": false
     },
     ".claude/skills/kb-ingest/SKILL.md": {
-      "sha256": "9c0b6e29be5aad6786fec832f560abb5577bb8f260c81963715e61cf0e6429f3",
+      "sha256": "540c3f83113873cacd24ab380fbde1d546fcc1dd99097cdded02d974dbb9fb10",
       "templated": false
     },
     ".claude/skills/kb-ingest/reference/CONTEXT.md": {

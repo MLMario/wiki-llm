@@ -12,7 +12,8 @@ custom subagents in sequence:
 2. `kb-analyzer` (Agent 2) — claim routing, prose authoring, source-summary draft.
 3. `kb-wiki-update` (Agent 3) — mechanical schema-aware writer.
 
-Per-source loop. N pending sources = 3N agent spawns.
+Per-source loop. N pending sources = 3N agent spawns. Old single-pass logic was
+replaced 2026-04-25; see `docs/superpowers/specs/2026-04-25-kb-ingest-multi-agent-design.md`.
 
 ## Input parameters
 

@@ -1,6 +1,6 @@
 # create-wiki-llm
 
-*Scaffold a Karpathy-style LLM wiki for Claude Code, driven by five `kb-*` skills.*
+*Scaffold a Karpathy-style LLM wiki for Claude Code, driven by seven `kb-*` skills.*
 
 ## What is this?
 
@@ -48,7 +48,7 @@ Open the directory in Claude Code and capture your first source:
 ### Requirements
 
 - Node.js 20 or newer.
-- [Claude Code](https://www.anthropic.com/claude-code), where the five skills run.
+- [Claude Code](https://www.anthropic.com/claude-code), where the `kb-*` skills run.
 - Python 3 and `pymupdf4llm` if you want to drop local PDFs (`pip install -r requirements.txt`). Skip this and `/kb-drop` will still handle URLs and typed notes.
 
 The npm package itself has no runtime dependencies. It uses Node built-ins only.
@@ -59,7 +59,8 @@ A scaffolded wiki is plain markdown and git, organized into three layers with st
 
 ```
 my-kb/
-  .claude/skills/kb-{drop,ingest,resolve,lint,query}/   # Five Claude Code skills (the writers)
+  .claude/skills/kb-{drop,ingest,resolve,lint,query,draft,draft-directed}/   # Seven Claude Code skills
+  .claude/agents/{kb-extract-explore,kb-analyzer,kb-wiki-update,kb-search}.md  # Subagents spawned by the skills
   knowledge-base/
     raw/{articles,papers,notes,misc,images}/            # Inbox: immutable source documents
     wiki/{concepts,entities,comparisons,sources}/       # LLM-compiled pages (the wiki proper)
@@ -86,7 +87,7 @@ my-kb/
 - **Comparison pages** hold side-by-side analyses (A vs B), used sparingly when two things are useful to contrast directly.
 - **Source summaries** live in their own subdirectory and exist as a provenance layer: one summary per ingested document, demoted at query time so they surface only when a query is explicitly about provenance.
 
-### The five skills
+### The seven skills
 
 | Skill | Purpose | Writes to |
 |---|---|---|
@@ -95,6 +96,8 @@ my-kb/
 | `/kb-resolve` | Adjudicate one flagged contradiction per dialogue. Mutates the affected page, amends the losing source summary, marks `[demoted]` in `source_index.md`, logs the decision. Run when ingest reports contradictions. | `wiki/`, `source_index.md`, `log.md` |
 | `/kb-lint` | Audit the wiki for orphans, broken wikilinks, stale content, contradiction-state drift, and `sources:` / `source_summaries:` parity violations. | `index.md` orphan-watch section, `log.md` |
 | `/kb-query` | Answer questions by reading `index.md` and the relevant wiki pages, with wikilink citations. Reads source summaries only behind a permission gate. | Read-only by default |
+| `/kb-draft <input.md>` | Compile a markdown input (outline, partial draft, brain-dump, or spark) into an annotated article draft via 5 autonomous passes (spark, outline, priors, draft, claim-check + voice-pass). Grounded in the wiki, voice-checked against a static profile. | `.kb-draft-staging/<slug>/` |
+| `/kb-draft-directed <input.md>` | Compile a markdown input via 4 passes (spark, outline, research-and-draft, verify) with human-in-the-loop direction at every creative juncture. Mechanical research and verification once the outline is approved. | `<input-stem>.draft.md` |
 
 ### Design choices worth knowing
 

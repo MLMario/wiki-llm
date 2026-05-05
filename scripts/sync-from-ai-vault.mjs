@@ -2,12 +2,14 @@
 // Sync source-of-truth files from the local ai_vault checkout into templates/.
 //
 // Source of truth (read-only, sibling checkout):
-//   ../ai_vault/.claude/skills/kb-{drop,ingest,resolve,lint,query}/**
+//   ../ai_vault/.claude/skills/kb-{drop,ingest,resolve,lint,query,draft,draft-directed}/**
+//   ../ai_vault/.claude/agents/**
 //   ../ai_vault/utils/pdf_to_markdown.py
 //   ../ai_vault/requirements.txt
 //
 // Destination (overwritten byte-for-byte):
 //   templates/.claude/skills/kb-*/**
+//   templates/.claude/agents/**
 //   templates/utils/pdf_to_markdown.py
 //   templates/requirements.txt
 //
@@ -26,7 +28,7 @@ const PACKAGE_ROOT = dirname(SCRIPT_DIR);
 const AI_VAULT_ROOT = join(PACKAGE_ROOT, '..', 'ai_vault');
 const TEMPLATES_ROOT = join(PACKAGE_ROOT, 'templates');
 
-const SKILLS = ['kb-drop', 'kb-ingest', 'kb-resolve', 'kb-lint', 'kb-query'];
+const SKILLS = ['kb-drop', 'kb-ingest', 'kb-resolve', 'kb-lint', 'kb-query', 'kb-draft', 'kb-draft-directed'];
 
 function listFilesRecursive(rootDir) {
   const out = [];
@@ -105,7 +107,16 @@ function main() {
     allChanged.push(...result.changed);
   }
 
-  // 2. utils/pdf_to_markdown.py
+  // 2. .claude/agents/ — tree sync (all files, including .gitkeep).
+  {
+    const src = join(AI_VAULT_ROOT, '.claude', 'agents');
+    const dst = join(TEMPLATES_ROOT, '.claude', 'agents');
+    const result = syncTree(src, dst, '.claude/agents');
+    totalFiles += result.count;
+    allChanged.push(...result.changed);
+  }
+
+  // 3. utils/pdf_to_markdown.py
   {
     const src = join(AI_VAULT_ROOT, 'utils', 'pdf_to_markdown.py');
     const dst = join(TEMPLATES_ROOT, 'utils', 'pdf_to_markdown.py');
@@ -114,7 +125,7 @@ function main() {
     allChanged.push(...result.changed);
   }
 
-  // 3. requirements.txt
+  // 4. requirements.txt
   {
     const src = join(AI_VAULT_ROOT, 'requirements.txt');
     const dst = join(TEMPLATES_ROOT, 'requirements.txt');

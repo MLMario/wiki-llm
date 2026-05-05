@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-05
+
+Adds two article-drafting skills, `/kb-draft` (autonomous, 5-pass) and `/kb-draft-directed` (interactive, 4-pass with user direction at spark and outline). Both ground claims in the wiki via a shared retrieval agent.
+
+### Added
+
+- `.claude/skills/kb-draft/` — compile a markdown input (outline, partial draft, brain-dump, or spark) into an annotated draft via 5 autonomous passes (spark → outline → priors → draft → claim-check + voice-pass). Voice-checked against a static `voice-profile.md` shipped with the skill. Writes a `<slug>.draft.md` plus 6 staging files under `.kb-draft-staging/<slug>/`.
+- `.claude/skills/kb-draft-directed/` — compile an input markdown file via 4 passes (spark → outline → research-and-draft → verify) with human-in-the-loop direction at every creative juncture (angle, audience, anchor pages, outline shape). Passes 3 and 4 run mechanically once direction is set. Writes a single `<input-stem>.draft.md` next to the input.
+- `.claude/agents/kb-search.md` — shared retrieval agent used by both draft skills (and reusable by `/kb-query`) for wiki traversal. Read-only; returns structured findings without proposing creative options.
+- `scripts/sync-from-ai-vault.mjs` extended to include the two new skills and a tree sync of `.claude/agents/`. Future kb-* and agent additions in the canonical `ai_vault` checkout now flow through `npm run` automatically.
+
+### Changed
+
+- `.claude/skills/kb-ingest/SKILL.md` — picks up the post-0.1.1 spawn-prompt guardrail telling future runs not to add a text-return fallback clause to the Agent 1 / Agent 2 spawn prompts (drift fix from `ai_vault@f4932c3`).
+
+### Migration notes
+
+- Existing scaffolded repos pick up the new skills via `npx create-wiki-llm@latest --update`. The updater writes the two new skill directories and the new `kb-search` agent file. The Path-safety allowlist already includes `.claude/agents/` from 0.1.1, so no allowlist changes are required.
+- The autonomous `/kb-draft` ships with `voice-profile.md` populated from the canonical `ai_vault` voice. Tune it to your own writing voice if you want the voice-pass to validate against your style instead.
+
 ## [0.1.1] - 2026-04-25
 
 `/kb-ingest` is now an orchestrator that spawns three custom subagents per pending raw/ source instead of running a single-pass routine.
@@ -61,6 +81,7 @@ Initial public release.
 - The updater requires network access to `https://registry.npmjs.org` to fetch the latest tarball.
 - No `--merge` option for skill customizations in v0.1; the only choices are "refuse" (default) or "overwrite with backup" (`--force`).
 
-[Unreleased]: https://github.com/MLMario/wiki-llm/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/MLMario/wiki-llm/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/MLMario/wiki-llm/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/MLMario/wiki-llm/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/MLMario/wiki-llm/releases/tag/v0.1.0

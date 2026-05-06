@@ -2,7 +2,7 @@
 
 > Scaffolded by `create-wiki-llm` on {{CREATED_DATE}}.
 
-Personal knowledge base in plain markdown, driven by five Claude Code skills. URLs, papers, and notes go into `knowledge-base/raw/`; an LLM compiles them into interlinked wiki pages under `knowledge-base/wiki/`. No databases, no embeddings — just markdown and a master `index.md`.
+Personal knowledge base in plain markdown, driven by seven Claude Code skills. URLs, papers, and notes go into `knowledge-base/raw/`; a multi-agent ingest pipeline compiles them into interlinked wiki pages under `knowledge-base/wiki/`; two drafting skills turn the wiki back into article drafts when you want to publish. No databases, no embeddings — just markdown and a master `index.md`.
 
 ## Quickstart
 
@@ -13,19 +13,21 @@ Open this directory in [Claude Code](https://www.anthropic.com/claude-code), the
 /kb-ingest
 ```
 
-`/kb-drop` fetches the URL verbatim into `knowledge-base/raw/articles/`. `/kb-ingest` compiles every `status: pending` raw item into structured pages under `knowledge-base/wiki/` and updates `knowledge-base/index.md`.
+`/kb-drop` fetches the URL verbatim into `knowledge-base/raw/articles/`. `/kb-ingest` walks every `status: pending` raw item through a three-agent pipeline (extract → analyze → write) and compiles them into structured pages under `knowledge-base/wiki/`, updating `knowledge-base/index.md` along the way.
 
 Other useful commands once you have content:
 
 - `/kb-query <question>` — search the wiki and answer with citations.
 - `/kb-resolve` — adjudicate any contradictions `/kb-ingest` flagged.
 - `/kb-lint` — audit the wiki for orphans, broken wikilinks, stale pages.
+- `/kb-draft <input.md>` — turn a markdown input (outline, brain-dump, partial draft, or one-line spark) into a wiki-grounded article draft, autonomously, in five passes.
+- `/kb-draft-directed <input.md>` — same goal, but you steer the angle, anchor pages, and outline shape before research and verification run mechanically.
 
 See `CLAUDE.md` for the full architecture, schema, and design constraints.
 
 ## Updating the package-owned files
 
-The five `kb-*` skills, `utils/pdf_to_markdown.py`, `requirements.txt`, and `knowledge-base/CONTEXT.md` come from the `create-wiki-llm` npm package. To pull the latest versions:
+The seven `kb-*` skills, the four `kb-*` subagents under `.claude/agents/`, `utils/pdf_to_markdown.py`, `requirements.txt`, and `knowledge-base/CONTEXT.md` come from the `create-wiki-llm` npm package. To pull the latest versions:
 
 ```bash
 npx create-wiki-llm@latest --update
@@ -49,17 +51,21 @@ URL drops do not need Python — only `curl`, which Claude Code already uses thr
 
 ```
 knowledge-base/
-  raw/           # Inbox: articles/, papers/, notes/, misc/, images/
-  wiki/          # Compiled pages: concepts/, entities/, comparisons/, sources/
-  index.md       # Topic index — entry point for /kb-query
-  source_index.md# Provenance index — read by /kb-query behind a permission gate
-  log.md         # Append-only processing log
-  CONTEXT.md     # Schema overview
-  curriculum.md  # Topic depth targets (yours to edit)
-.claude/skills/  # Five kb-* skills (package-owned)
-utils/           # pdf_to_markdown.py (package-owned)
-CLAUDE.md        # Architecture overview for Claude Code
-.wiki-llm/       # Manifest + update backups (gitignored)
+  raw/                  # Inbox: articles/, papers/, notes/, misc/, images/
+  wiki/                 # Compiled pages: concepts/, entities/, comparisons/, sources/
+  index.md              # Topic index — entry point for /kb-query
+  source_index.md       # Provenance index — read by /kb-query behind a permission gate
+  log.md                # Append-only processing log
+  CONTEXT.md            # Schema overview
+  curriculum.md         # Topic depth targets (yours to edit)
+  .kb-ingest-staging/   # Per-source ingest artifacts (gitignored)
+.claude/
+  skills/               # Seven kb-* skills (package-owned)
+  agents/               # Four kb-* subagents the skills spawn (package-owned)
+.kb-draft-staging/      # Per-draft artifacts from /kb-draft (gitignored)
+utils/                  # pdf_to_markdown.py (package-owned)
+CLAUDE.md               # Architecture overview for Claude Code
+.wiki-llm/              # Manifest + update backups (gitignored)
 ```
 
 For the long-form architecture overview, see [`CLAUDE.md`](./CLAUDE.md).

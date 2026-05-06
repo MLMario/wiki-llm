@@ -8,19 +8,21 @@
 
 If you already know the Karpathy LLM wiki pattern, skip ahead to **Installation**. If not, the short version:
 
-1) The LLM reads each new source once and identifies key concepts and enteties. 
-2) If the concepts/enteties are already on wiki -> it adds new information, surfaces counterarguments and flags factual contradictions
-3) if the concepts/enteties are new -> it creates itw own wiki pages 
-4) In both cases the LLM also searchs for related concepts and adds them to the page. 
-5) You can also use a skill to query the wiki, it will answer by looking for top relevant content.
+1) You drop a source (URL, PDF, typed note) into `raw/`. Verbatim, no paraphrase on the way in.
+2) `/kb-ingest` runs each pending source through a three-agent pipeline: extract concepts and entities with semantic dedup, route each claim against the existing wiki, then mechanically apply the planned edits. New pages get created, existing pages get additive edits, contradictions get flagged in place.
+3) `/kb-query` answers questions over the compiled wiki with `[[wikilink]]` citations.
+4) `/kb-draft` and `/kb-draft-directed` compile a markdown input — outline, brain-dump, partial draft, or one-line spark — into a wiki-grounded article draft, with every fact-bearing claim linked back to the page it came from.
+5) `/kb-resolve` and `/kb-lint` keep the wiki honest as it grows.
 
-Basically, the LLM helps you identify and update your knowledge while identifying connections with your current knowledge. 
+The LLM helps you identify and update your knowledge while writing down the connections. It also helps you turn the wiki back into prose when you need to publish.
 
 ### What this version adds on top of the basic pattern
 
-- **Contradictions are first-class artifacts**, not edge cases. When a new source disagrees with the wiki, ingest flags it in place and `/kb-resolve` adjudicates one contradiction at a time. The losing source summary gets an amendment preamble and `source_index.md` marks it `[demoted]`. Disagreements survive the decision instead of being averaged away.
+- **Multi-agent ingest, not single-pass.** `/kb-ingest` is a thin orchestrator that spawns three subagents per pending source: a read-only extractor with semantic dedup against existing wiki bodies, an analyzer that routes each claim into one of four buckets (`corroborate`, `counterargument`, `gap`, `contradict`) and authors the prose, and a mechanical writer that applies the planned edits. Routing is separated from writing — disagreements about *what to do* never bleed into the file system.
+- **Drafting as a first-class workflow.** `/kb-draft` and `/kb-draft-directed` turn the wiki into a research workbench for writing. Both compile a markdown input into an annotated draft whose every fact-bearing sentence is grounded in a wiki page. The autonomous variant runs five passes unattended and voice-checks the output against your own past prose in cold context. The directed variant stops at every creative juncture so you can pick the angle, the anchor pages, and the outline shape before research and verification run mechanically.
+- **Contradictions are first-class artifacts**, not edge cases. When the analyzer routes a claim to `bucket: contradict`, the writer drops it into the affected page's `## Contradictions` section in place. `/kb-resolve` adjudicates one contradiction at a time. The losing source summary gets an amendment preamble and `source_index.md` marks it `[demoted]`. Disagreements survive the decision instead of being averaged away.
 - **Verbatim raw capture**. HTML drops are fetched through Jina Reader, local PDFs are converted via `pymupdf4llm`, and PDF URLs are hard-rejected at drop time. The LLM never paraphrases your source on the way into the inbox.
-- **Query skill prioritizes reading from wiki pages**. `/kb-query` reads compiled wiki pages by default and only opens source summaries when a permission gate fires, so provenance lives in its own layer instead of leaking into every answer.
+- **Index-first queries with provenance behind a gate**. `/kb-query` reads the curated `index.md` first and ranks entries by keyword overlap, then opens the relevant compiled wiki pages. Source summaries are read only when a permission gate fires, so provenance lives in its own layer instead of leaking into every answer.
 
 ### The philosophy
 
@@ -59,24 +61,27 @@ A scaffolded wiki is plain markdown and git, organized into three layers with st
 
 ```
 my-kb/
-  .claude/skills/kb-{drop,ingest,resolve,lint,query,draft,draft-directed}/   # Seven Claude Code skills
-  .claude/agents/{kb-extract-explore,kb-analyzer,kb-wiki-update,kb-search}.md  # Subagents spawned by the skills
+  .claude/
+    skills/kb-{drop,ingest,resolve,lint,query,draft,draft-directed}/   # Seven Claude Code skills
+    agents/{kb-extract-explore,kb-analyzer,kb-wiki-update,kb-search}.md  # Subagents the skills spawn
   knowledge-base/
-    raw/{articles,papers,notes,misc,images}/            # Inbox: immutable source documents
-    wiki/{concepts,entities,comparisons,sources}/       # LLM-compiled pages (the wiki proper)
-    index.md                                            # Topic entry point for queries
-    source_index.md                                     # Provenance index (chronological)
-    CONTEXT.md                                          # Schema overview
-  utils/pdf_to_markdown.py                              # Optional Python helper for local PDFs
+    raw/{articles,papers,notes,misc,images}/        # Inbox: immutable source documents
+    wiki/{concepts,entities,comparisons,sources}/   # LLM-compiled pages (the wiki proper)
+    index.md                                        # Topic entry point for queries
+    source_index.md                                 # Provenance index (chronological)
+    CONTEXT.md                                      # Schema overview
+    .kb-ingest-staging/<stem>/                      # Per-source ingest artifacts (gitignored)
+  .kb-draft-staging/<slug>/                         # Per-draft artifacts from /kb-draft (gitignored)
+  utils/pdf_to_markdown.py                          # Optional Python helper for local PDFs
   requirements.txt
-  CLAUDE.md                                             # Architecture overview for Claude Code
+  CLAUDE.md                                         # Architecture overview for Claude Code
 ```
 
 ### The three layers
 
 - **Raw** is immutable. Sources go in via `/kb-drop` and never get edited after that. The LLM reads them but does not modify them. They are the audit trail and the ground truth.
-- **Wiki** is LLM-owned. The five skills are the only things that write to it. Humans read it but do not edit it directly, because that is what protects the artifact from drift over time.
-- **Schema** is the instruction layer. `CLAUDE.md` and the per-skill `CONTEXT.md` files tell Claude Code how the wiki is organized, what page types exist, and what the conventions are.
+- **Wiki** is LLM-owned. `/kb-ingest`, `/kb-resolve`, and `/kb-lint` are the only skills that write to it; ingest writes go through Agent 3 (`kb-wiki-update`). Humans read the wiki but do not edit it directly, because that is what protects the artifact from drift over hundreds of operations.
+- **Schema** is the instruction layer. `CLAUDE.md` and the per-skill `CONTEXT.md` files tell Claude Code how the wiki is organized, what page types exist, and what the conventions are. The drafting skills (`/kb-draft`, `/kb-draft-directed`) read the wiki but write only to their own staging directories — they never touch `wiki/`.
 
 ### The four page types
 
@@ -92,17 +97,58 @@ my-kb/
 | Skill | Purpose | Writes to |
 |---|---|---|
 | `/kb-drop` | Fetch a URL via Jina Reader, copy a PDF via `pymupdf4llm`, or accept a typed note into `knowledge-base/raw/`. PDF URLs are rejected; download and drop the local path instead. | `raw/`, `log.md`, `ingested-urls.txt` |
-| `/kb-ingest` | Compile pending `raw/` items into `wiki/` pages. Creates new pages, performs additive edits to existing ones, updates the index, flags contradictions inline. Never resolves them. | `wiki/`, `index.md`, `source_index.md`, `log.md` |
+| `/kb-ingest` | Compile pending `raw/` items into `wiki/` pages via a three-agent pipeline (extract → analyze → write). Creates new pages, performs additive edits to existing ones, updates the index, flags contradictions inline. Never resolves them. | `wiki/`, `index.md`, `source_index.md`, `log.md` |
 | `/kb-resolve` | Adjudicate one flagged contradiction per dialogue. Mutates the affected page, amends the losing source summary, marks `[demoted]` in `source_index.md`, logs the decision. Run when ingest reports contradictions. | `wiki/`, `source_index.md`, `log.md` |
 | `/kb-lint` | Audit the wiki for orphans, broken wikilinks, stale content, contradiction-state drift, and `sources:` / `source_summaries:` parity violations. | `index.md` orphan-watch section, `log.md` |
 | `/kb-query` | Answer questions by reading `index.md` and the relevant wiki pages, with wikilink citations. Reads source summaries only behind a permission gate. | Read-only by default |
-| `/kb-draft <input.md>` | Compile a markdown input (outline, partial draft, brain-dump, or spark) into an annotated article draft via 5 autonomous passes (spark, outline, priors, draft, claim-check + voice-pass). Grounded in the wiki, voice-checked against a static profile. | `.kb-draft-staging/<slug>/` |
+| `/kb-draft <input.md>` | Compile a markdown input (outline, partial draft, brain-dump, or spark) into an annotated article draft via 5 autonomous passes (spark, outline, priors, draft, claim-check + voice-pass). Grounded in the wiki, voice-checked against a static profile in cold context. | `.kb-draft-staging/<slug>/` |
 | `/kb-draft-directed <input.md>` | Compile a markdown input via 4 passes (spark, outline, research-and-draft, verify) with human-in-the-loop direction at every creative juncture. Mechanical research and verification once the outline is approved. | `<input-stem>.draft.md` |
+
+### Inside `/kb-ingest` — the orchestrator
+
+`/kb-ingest` is a thin orchestrator. For each pending raw source, oldest first, it walks the source through three independent subagents and a single writer:
+
+```
+   raw/<file>.md  (status: pending)
+           │
+           ▼
+   ┌──────────────────────────────┐
+   │ Agent 1: kb-extract-explore  │  read-only
+   │   → 01-extract.md            │  semantic dedup against existing
+   │                              │  wiki page bodies (not just titles)
+   └──────────────────────────────┘
+           │
+           ▼
+   ┌──────────────────────────────┐
+   │ Agent 2: kb-analyzer         │  read-only
+   │   → 02-analysis.md           │  route each claim into one of:
+   │                              │  corroborate | counterargument
+   │                              │  | gap | contradict.
+   │                              │  Author prose + source summary.
+   └──────────────────────────────┘
+           │
+           ▼
+   ┌──────────────────────────────┐
+   │ Agent 3: kb-wiki-update      │  the only writer
+   │   → wiki/, index.md,         │  mechanical schema applier.
+   │     source_index.md, log.md  │  No judgment calls.
+   └──────────────────────────────┘
+           │
+           ▼
+   raw/<file>.md  (status: ingested)
+```
+
+The split is load-bearing. Agent 1 decides whether each concept and entity already has a page by reading semantic neighbors in full, not by matching titles. Agent 2 decides what to *do* with each claim — extend a page, surface a counterargument, log a gap, or flag a contradiction — and authors the prose. Agent 3 decides nothing; it applies the plan exactly as specified. **Routing is separated from writing**, which is what protects the artifact from soft regenerative drift over hundreds of ingests.
+
+Per-source intermediate artifacts (`01-extract.md`, `02-analysis.md`) persist under `knowledge-base/.kb-ingest-staging/<stem>/` for inspection, gitignored, kept on every outcome (success and failure). A pre-flight prompt offers to wipe stale staging before the next run.
+
+The pipeline runs N times for N pending sources. Source N+1's Agent 1 sees the pages source N just created, so chronological ingest order shapes how the wiki grows.
 
 ### Design choices worth knowing
 
 - **Index-first retrieval**. `/kb-query` opens `index.md` first and ranks entries by keyword overlap. Vector search has its place in planned future work, but the index, curated by the same skill that wrote the pages, is unusually high-signal and stays the entry point.
 - **Additive surgical edits**. When a source touches an existing page, ingest appends to the right section, adds the source to the frontmatter list, and upgrades confidence on corroboration. It does not rewrite. This is the discipline that protects the wiki from LLM regenerative drift over hundreds of ingest operations.
+- **Drafting reads the wiki, never writes to it.** Both draft skills are pure consumers — they ground claims in wiki pages but never modify them. If a draft pass discovers something missing, the answer is to ingest more material, not to patch the wiki from inside the writing loop.
 - **Markdown over databases**. No schema migrations, no rigidity, grep-able by default. Plain markdown is the right substrate at personal scale.
 - **No background processes**. The scaffolder ships no daemons, no watchers, no schedulers. Every action is a slash command you ran on purpose.
 
@@ -138,7 +184,7 @@ When one or more pending sources are sitting in `raw/`, you run:
 /kb-ingest
 ```
 
-`/kb-ingest` reads each pending source once, extracts concepts and entities, decides which need new pages and which extend existing ones, writes wikilinks across them, and updates `index.md`. Updates to existing pages are additive: new claims land in the right section, the new source appends to the frontmatter list, and confidence is upgraded only on corroboration. If a new source disagrees with something already in the wiki, ingest flags the contradiction in place under a `## Contradictions` section and reports it in the run summary. It does not pick a winner.
+The orchestrator walks each pending source through the three-agent pipeline: extract concepts and entities with semantic dedup, route each claim against the existing wiki, then apply the planned edits. Updates to existing pages are additive: new claims land in the right section, the new source appends to the frontmatter list, and confidence is upgraded only on corroboration. If a new source disagrees with something already in the wiki, the analyzer routes the claim to `bucket: contradict`, the writer drops it into the page's `## Contradictions` section, and the run summary reports the count. Ingest does not pick a winner.
 
 ### Adjudicate contradictions
 
@@ -160,6 +206,28 @@ Ask a question:
 
 `/kb-query` opens `index.md`, finds candidate concept and entity pages, reads them, and synthesizes an answer with `[[wikilink]]` citations. If the question benefits from source-level detail (provenance questions, source-level validation, recency questions), the skill asks before reading source summaries. The default is to answer from the compiled wiki layer.
 
+### Draft an article from the wiki
+
+When you want to turn what you have ingested back into prose, you run one of:
+
+```
+/kb-draft path/to/input.md            # autonomous, 5 passes
+/kb-draft-directed path/to/input.md   # interactive, 4 passes with direction at spark + outline
+```
+
+The input can be an outline, a partial draft, a brain-dump of disconnected thoughts, or a one-sentence spark. Both skills:
+
+1. Map the input's claims to wiki pages via the index.
+2. Read the matched pages, lift verbatim supporting quotes AND verbatim counterarguments. Stake-bearing bullets that have no wiki anchor get flagged as **gaps** — a signal to ingest more material before drafting.
+3. Compose prose grounded only in what was retrieved. The wiki goes dormant during the actual writing pass: no fishing for new claims mid-draft.
+4. Verify each citation by re-opening the named page and confirming the claim grounds in the page text.
+
+`/kb-draft` runs unattended and ends with a static-profile voice pass that flags banned phrases, generic AI prose, and matches against three of your past articles in cold context — the voice critic cannot see the outline or the priors, only the draft.
+
+`/kb-draft-directed` stops at every creative juncture so you can pick: which angle (4 candidates, each a thesis + audience + rhetorical move), which anchor pages (8–12 candidates), which rhetorical shape for the outline (3 candidates with deliberately different shapes — didactic, polemical, narrative). Once direction is set, research and verification run mechanically.
+
+Both write the final draft to a `.draft.md` file. The autonomous skill keeps six numbered staging files alongside it for inspection.
+
 ### Periodic health check
 
 Once in a while, run:
@@ -178,7 +246,7 @@ From inside any scaffolded repo:
 npx create-wiki-llm@latest --update
 ```
 
-This pulls the latest version of the package and overwrites only the files the package owns: skill definitions under `.claude/skills/kb-*`, `utils/`, `requirements.txt`, and `knowledge-base/CONTEXT.md`. Anything under `knowledge-base/raw/` and `knowledge-base/wiki/` is left alone.
+This pulls the latest version of the package and overwrites only the files the package owns: skill definitions under `.claude/skills/kb-*`, subagent definitions under `.claude/agents/`, `utils/`, `requirements.txt`, and `knowledge-base/CONTEXT.md`. Anything under `knowledge-base/raw/` and `knowledge-base/wiki/` is left alone.
 
 Useful flags:
 
@@ -190,7 +258,7 @@ Useful flags:
 Three things the current version does not do. These are known gaps, not "coming soon":
 
 - **Query-intent routing**. `/kb-query` runs one retrieval pipeline against every question, but real queries fall into distinct shapes (*what is X?*, *how does Y work?*, *how does A differ from B?*, *what have I read about Z?*) and each has a best strategy. A planned classifier picks an intent and routes to a strategy tuned for it. Semantic-similarity ranking is one of the strategies it will route to, for queries that phrase a concept differently than the wiki does. Almost no implementation in circulation does this; it is the highest-leverage retrieval upgrade available to LLM wikis today.
-- **Near-duplicate matching at ingest**. `/kb-ingest` checks for existing pages by filename, which catches exact matches and misses semantic twins. Planned: an embedding-backed similarity check before a new page is created, so a "model context protocol" article does not end up creating a sibling to an existing "MCP" page.
+- **Embedding-backed near-duplicate matching at ingest**. Agent 1 dedups by reading semantic neighbors in full, which is strong but expensive. A planned embedding pre-filter would shortlist candidates before the LLM reads them, so a "model context protocol" article would not risk a sibling page next to an existing "MCP" page even on a large wiki.
 - **Per-claim confidence scoring**. Trust is currently binary: a claim is in the wiki, or in a demoted source summary. A future version may score claims by corroboration, age, and source type.
 
 ## License
